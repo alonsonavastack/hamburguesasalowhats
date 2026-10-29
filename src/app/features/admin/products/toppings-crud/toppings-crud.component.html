@@ -1,0 +1,147 @@
+<div>
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+    <div>
+      <h1 style="font-family:'Cinzel',serif; font-size:1.4rem; color:var(--texto-primary);">✨ Toppings</h1>
+      <p style="color:var(--texto-secondary); font-size:0.85rem; margin-top:0.2rem;">{{ items().length }} registros</p>
+    </div>
+    <button (click)="openCreate()" class="btn-neon"
+      style="padding:0.6rem 1.25rem; border-radius:10px; font-family:'Nunito',sans-serif; font-size:0.9rem; font-weight:700;">
+      + Nuevo topping
+    </button>
+  </div>
+
+  <div style="background:var(--bg-card); border:1px solid rgba(192,38,211,0.2); border-radius:14px; overflow:hidden;">
+    @if (items().length === 0) {
+      <div style="padding:3rem; text-align:center; color:var(--texto-muted);">Sin toppings registrados</div>
+    } @else {
+      <table style="width:100%; border-collapse:collapse;">
+        <thead>
+          <tr style="border-bottom:1px solid rgba(192,38,211,0.15); background:var(--bg-surface);">
+            <th style="padding:0.75rem 1rem; text-align:left; font-size:0.8rem; color:var(--texto-secondary); font-weight:600;">Imagen</th>
+            <th style="padding:0.75rem 1rem; text-align:left; font-size:0.8rem; color:var(--texto-secondary); font-weight:600;">Nombre</th>
+            <th style="padding:0.75rem 1rem; text-align:left; font-size:0.8rem; color:var(--texto-secondary); font-weight:600;">Estado</th>
+            <th style="padding:0.75rem 1rem; text-align:left; font-size:0.8rem; color:var(--texto-secondary); font-weight:600;">Orden</th>
+            <th style="padding:0.75rem 1rem; text-align:right; font-size:0.8rem; color:var(--texto-secondary); font-weight:600;">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of items(); track item.id) {
+            <tr style="border-bottom:1px solid rgba(192,38,211,0.08); transition:background 0.15s;"
+              onmouseenter="this.style.background='rgba(192,38,211,0.04)'"
+              onmouseleave="this.style.background='transparent'">
+              <td style="padding:0.75rem 1rem;">
+                @if (item.imageUrl) {
+                  <img [src]="item.imageUrl" style="width:44px; height:44px; object-fit:cover; border-radius:10px; border:1px solid rgba(192,38,211,0.2);" />
+                } @else {
+                  <div style="width:44px; height:44px; border-radius:10px; background:var(--bg-surface); display:flex; align-items:center; justify-content:center; font-size:1.3rem;">✨</div>
+                }
+              </td>
+              <td style="padding:0.75rem 1rem; font-weight:600; color:var(--texto-primary); font-size:0.9rem;">{{ item.name }}</td>
+              <td style="padding:0.75rem 1rem;">
+                <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+                  <span [style.background]="item.available ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)'"
+                    [style.color]="item.available ? '#86efac' : '#fca5a5'"
+                    style="font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:20px;">
+                    {{ item.available ? 'Disponible' : 'No disponible' }}
+                  </span>
+                  @if (item.popular) {
+                    <span style="background:rgba(192,38,211,0.2); color:var(--neon-light); font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:20px;">⭐ Popular</span>
+                  }
+                </div>
+              </td>
+              <td style="padding:0.75rem 1rem; color:var(--texto-secondary); font-size:0.9rem;">{{ item.order }}</td>
+              <td style="padding:0.75rem 1rem; text-align:right;">
+                <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
+                  <button (click)="openEdit(item)"
+                    style="background:rgba(192,38,211,0.15); border:1px solid rgba(192,38,211,0.3); color:var(--neon-light); padding:0.35rem 0.75rem; border-radius:8px; cursor:pointer; font-size:0.8rem; font-family:'Nunito',sans-serif; font-weight:600;"
+                    onmouseenter="this.style.background='rgba(192,38,211,0.3)'"
+                    onmouseleave="this.style.background='rgba(192,38,211,0.15)'">Editar</button>
+                  <button (click)="delete(item)"
+                    style="background:rgba(139,26,26,0.15); border:1px solid rgba(192,57,57,0.3); color:var(--vino-suave); padding:0.35rem 0.75rem; border-radius:8px; cursor:pointer; font-size:0.8rem; font-family:'Nunito',sans-serif; font-weight:600;"
+                    onmouseenter="this.style.background='rgba(139,26,26,0.35)'"
+                    onmouseleave="this.style.background='rgba(139,26,26,0.15)'">Eliminar</button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</div>
+
+@if (modalOpen()) {
+  <div style="position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:100; display:flex; align-items:center; justify-content:center; padding:1rem;" (click)="closeModal()">
+    <div style="background:var(--bg-card); border:1px solid rgba(192,38,211,0.35); border-radius:16px; padding:2rem; width:100%; max-width:460px; box-shadow:0 0 40px rgba(192,38,211,0.2);"
+      (click)="$event.stopPropagation()">
+      <h2 style="font-family:'Cinzel',serif; font-size:1.1rem; color:var(--texto-primary); margin-bottom:1.5rem;">
+        {{ editingItem() ? 'Editar topping' : 'Nuevo topping' }}
+      </h2>
+
+      <form [formGroup]="form" (ngSubmit)="save()" style="display:flex; flex-direction:column; gap:1rem;">
+        <div>
+          <label style="display:block; font-size:0.8rem; color:var(--texto-secondary); margin-bottom:0.35rem; font-weight:600;">Nombre *</label>
+          <input type="text" formControlName="name" placeholder="Ej: Galletas Oreo" />
+        </div>
+
+        <!-- Imagen: pegar URL -->
+        <div>
+          <label style="display:block; font-size:0.8rem; color:var(--texto-secondary); margin-bottom:0.5rem; font-weight:600;">Imagen</label>
+          <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
+            <button type="button" (click)="uploadMode.set('url')"
+              [style.background]="uploadMode() === 'url' ? 'linear-gradient(135deg,var(--neon-dark),var(--neon))' : 'var(--bg-surface)'"
+              [style.borderColor]="uploadMode() === 'url' ? 'var(--neon)' : 'rgba(192,38,211,0.2)'"
+              style="border:1px solid; border-radius:7px; padding:0.3rem 0.8rem; color:var(--texto-primary); cursor:pointer; font-family:'Nunito',sans-serif; font-size:0.8rem; font-weight:600;">
+              🔗 Pegar URL
+            </button>
+            <button type="button" (click)="uploadMode.set('file')"
+              [style.background]="uploadMode() === 'file' ? 'linear-gradient(135deg,var(--neon-dark),var(--neon))' : 'var(--bg-surface)'"
+              [style.borderColor]="uploadMode() === 'file' ? 'var(--neon)' : 'rgba(192,38,211,0.2)'"
+              style="border:1px solid; border-radius:7px; padding:0.3rem 0.8rem; color:var(--texto-primary); cursor:pointer; font-family:'Nunito',sans-serif; font-size:0.8rem; font-weight:600;">
+              📁 Subir archivo
+            </button>
+          </div>
+          @if (uploadMode() === 'url') {
+            <input type="text" formControlName="imageUrl" placeholder="https://res.cloudinary.com/..." />
+          } @else {
+            <input type="file" accept="image/*" (change)="onFileChange($event)" style="font-size:0.85rem; padding:0.4rem 0.75rem;" />
+            @if (uploading()) {
+              <p style="font-size:0.78rem; color:var(--neon-light); margin-top:0.35rem;">⏳ Subiendo a Cloudinary...</p>
+            }
+          }
+          @if (form.get('imageUrl')?.value) {
+            <img [src]="form.get('imageUrl')?.value" style="width:80px; height:80px; object-fit:cover; border-radius:10px; margin-top:0.5rem; border:1px solid rgba(192,38,211,0.3);" />
+          }
+        </div>
+
+        <div>
+          <label style="display:block; font-size:0.8rem; color:var(--texto-secondary); margin-bottom:0.35rem; font-weight:600;">Orden</label>
+          <input type="number" formControlName="order" min="1" />
+        </div>
+
+        <div style="display:flex; gap:1.5rem; flex-wrap:wrap;">
+          <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; font-size:0.85rem; color:var(--texto-primary); font-weight:600;">
+            <input type="checkbox" formControlName="available" style="width:16px; height:16px; accent-color:var(--neon);" />
+            Disponible
+          </label>
+          <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; font-size:0.85rem; color:var(--texto-primary); font-weight:600;">
+            <input type="checkbox" formControlName="popular" style="width:16px; height:16px; accent-color:var(--neon);" />
+            Popular
+          </label>
+        </div>
+
+        <div style="display:flex; gap:0.75rem; justify-content:flex-end; margin-top:0.5rem;">
+          <button type="button" (click)="closeModal()"
+            style="padding:0.6rem 1.2rem; background:var(--bg-surface); border:1px solid rgba(192,38,211,0.2); border-radius:9px; color:var(--texto-secondary); cursor:pointer; font-family:'Nunito',sans-serif; font-size:0.9rem; font-weight:600;">
+            Cancelar
+          </button>
+          <button type="submit" [disabled]="form.invalid || saving() || uploading()" class="btn-neon"
+            style="padding:0.6rem 1.4rem; border-radius:9px; font-family:'Nunito',sans-serif; font-size:0.9rem; font-weight:700;"
+            [style.opacity]="(form.invalid || saving() || uploading()) ? '0.5' : '1'">
+            {{ saving() ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
